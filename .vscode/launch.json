@@ -1,0 +1,36 @@
+{
+    "configurations": [
+        {
+            "name": "Compile",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "clear",
+            "args": [
+                "&&",
+                "make"
+            ]
+        },
+        {
+            "name": "Run",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "clear",
+            "args": [
+                "&&",
+                "make",
+                "run"
+            ]
+        },
+        {
+            "name": "Release",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "clear",
+            "args": [
+                "&&",
+                "make",
+                "run"
+            ]
+        }
+    ]
+}

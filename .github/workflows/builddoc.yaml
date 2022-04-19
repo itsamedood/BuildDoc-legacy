@@ -1,0 +1,25 @@
+name: BuildDoc_WF
+
+on:
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+
+    workflow_dispatch:
+
+jobs:
+    compile:
+        steps:
+            - name: Compile using cxfreeze.
+              run: clear && make
+
+    run:
+        steps:
+            - name: Run the program.
+              run: clear && make run
+
+    release:
+        steps:
+            - name: Zip together the binary & it's libraries.
+              run: clear  && make release
