@@ -1,0 +1,10 @@
+[.VARS]
+NAME	=	"itsamedood"
+AGE		=	16
+NICK	=	@USER
+ALL		=	"Hello $NAME, aka $NICK! You are $AGE years old!"
+
+[test]
+%echo $NAME
+%echo NICK
+%echo ALL

@@ -10,16 +10,19 @@ on:
 
 jobs:
     compile:
+        runs-on: [windows-latest, macos-latest, ubuntu-latest]
         steps:
             - name: Compile using cxfreeze.
               run: clear && make
 
     run:
+        runs-on: [windows-latest, macos-latest, ubuntu-latest]
         steps:
             - name: Run the program.
               run: clear && make run
 
     release:
+        runs-on: [windows-latest, macos-latest, ubuntu-latest]
         steps:
             - name: Zip together the binary & it's libraries.
               run: clear  && make release

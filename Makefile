@@ -9,7 +9,7 @@ OUTPUT_PATH  :=
 RELEASE_PATH :=
 
 # Checking the OS.
-ifeq ($(OS), "linux")
+ifeq ($(OS), linux)
 	SYS := linux
 else ifeq ($(OS), darwin)
 	SYS := macos
@@ -26,7 +26,12 @@ RELEASE_PATH := release/$(SYS)
 compile:
 	@echo 🛠 Compiling... 🛠
 	@echo -----------------
+ifeq ($(SYS), macos)
 	cxfreeze -c ./$(MAIN) --target-dir ./$(OUTPUT_PATH) --target-name $(BINARY)
+else ifeq ($(SYS), linux)
+# cxfreeze didn't wanna work on Linux for some reason.
+	pyinstaller --onefile ./$(MAIN) --distpath ./$(OUTPUT_PATH) --name $(BINARY) && rm -r ./build
+endif
 # Empty echo to create gap between compilation output and run-time output.
 	@echo
 	./$(OUTPUT_PATH)/$(BINARY)
