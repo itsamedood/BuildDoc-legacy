@@ -1,10 +1,12 @@
-[.VARS]
-NAME	=	"itsamedood"
+# EXAMPLE BUILDDOC #
+
+[.VARS] # Variables.
+NAME	=	'itsamedood'
 AGE		=	16
 NICK	=	@USER
-ALL		=	"Hello $NAME, aka $NICK! You are $AGE years old!"
+ALL		=	'Hello $NAME, aka $NICK! You are $AGE years old!'
 
-[test]
+[test] # Default task.
 %echo $NAME
 %echo NICK
 %echo ALL

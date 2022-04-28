@@ -46,4 +46,4 @@ run:
 release:
 	@echo 📁 Releasing... 📁
 	@echo -----------------
-	@echo Error: Cannot release yet.
+	@echo ❗️Cannot release yet!

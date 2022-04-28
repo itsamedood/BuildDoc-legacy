@@ -1,7 +1,7 @@
 from io import TextIOWrapper
 from sys import argv
 from console.error import builddoc_error
-from utils.mapper import mapper
+from interpreter.lexer import lexer
 import os
 
 
@@ -21,15 +21,12 @@ class main:
         `None` is returned.
         """
 
-        try:
-            for entry in os.scandir(self.cwd):
-                if entry.is_file() and entry.name.lower() == "builddoc":
-                    return f"{self.cwd}/BuildDoc"
-                else:
-                    continue
-            return None
-        except:
-            raise builddoc_error("Internal error (unknown).")  # Just in case.
+        for entry in os.scandir(self.cwd):
+            if entry.is_file() and entry.name.lower() == "builddoc":
+                return f"{self.cwd}/BuildDoc"
+            else:
+                continue
+        return None
 
     def run(self, path: str, task: str) -> None:
         """
@@ -38,14 +35,11 @@ class main:
 
         try:
             builddoc: TextIOWrapper = open(path, "r")
-            code: str = builddoc.read()
+            code: "list[str]" = [c for c in builddoc.read()]
 
-            # Mapping.
-            variables: "dict[str, str]" = mapper.map_variables(code)
-            commands: "dict[str, list[str]]" = mapper.map_task(code, task)
-
-        except:
-            raise builddoc_error("Something went wrong...")
+            tokenized_code = lexer.tokenize(code=code)
+        # except:
+        #     raise builddoc_error("Internal error.")
         finally:
             builddoc.close()  # Always close an open file!
 
