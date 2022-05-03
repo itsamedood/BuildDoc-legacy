@@ -12,36 +12,25 @@ L_BRACE: str = "}"
 R_BRACE: str = "{"
 
 # === OPERATORS === #
-MACRO_OP: str = "%"
-VARBL_OP: str = "$"
-ENVVR_OP: str = "@"
-ASSIN_OP: str = "="
-ADD: str = "+"
-SUB: str = "-"
-MUL: str = "*"
-DIV: str = "/"
+MACRO_OP: str = "%"  # For calling macros.
+VARBL_OP: str = "$"  # For using variables declared in `.VARS`.
+ENVVR_OP: str = "@"  # For using env. vars.
+SYSTM_OP: str = "?"  # For getting information like OS name.
+ASSIN_OP: str = "="  # For creating variables.
 
 # === SYMBOLS === #
 COMMENT: str = "#"
 PERIOD: str = "."
+COMMA: str = ","
 UNDERSCORE: str = "_"
-SINGLE_QUOTE: str = "'"
-DOUBLE_QUOTE: str = '"'
 
 # === OTHER === #
 WHITESPACE: str = " "
 TAB: str = "\t"
 LINEFEED: str = "\n"
 
-# List of all tokens.
-ALL_TOKENS: "list[list[str] | str]" = [
-    LOWER_LETTER, UPPER_LETTER, NUMBER,
-    L_BRACKET, R_BRACKET, L_PARENTH,
-    R_PARENTH, L_BRACE, R_BRACE,
+# === LISTS === #
+ALL_OPERATORS: "list[str]" = [
     MACRO_OP, VARBL_OP, ENVVR_OP,
-    ASSIN_OP, ADD, SUB,
-    MUL, DIV, COMMENT,
-    PERIOD, UNDERSCORE, SINGLE_QUOTE,
-    DOUBLE_QUOTE, WHITESPACE, TAB,
-    LINEFEED
+    ASSIN_OP
 ]

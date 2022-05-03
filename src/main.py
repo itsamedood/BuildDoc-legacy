@@ -4,6 +4,8 @@ from console.error import builddoc_error
 from interpreter.lexer import lexer
 import os
 
+from interpreter.parser import parser
+
 
 class main:
     """
@@ -28,16 +30,18 @@ class main:
                 continue
         return None
 
-    def run(self, path: str, task: str) -> None:
+    def run(self, path: str, task: "str | None") -> None:
         """
         Maps, parses, and runs `task` in the BuildDoc.
         """
 
         try:
             builddoc: TextIOWrapper = open(path, "r")
-            code: "list[str]" = [c for c in builddoc.read()]
+            code: str = builddoc.read()
 
-            tokenized_code = lexer.tokenize(code=code)
+            dicts = lexer.tokenize(code=code)
+            parsed_code = parser.parse(dicts[0], dicts[1])
+
         # except:
         #     raise builddoc_error("Internal error.")
         finally:

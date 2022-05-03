@@ -12,6 +12,7 @@ class color:
     PURPLE = "\033[0;35m"
     CYAN = "\033[0;36m"
     WHITE = "\033[0;37m"
+    GRAY = "\033[0;38m"
 
     # Style.
     BOLD = "\033[1m"
