@@ -10,13 +10,40 @@ class lexer:
     Lexer class.
     """
 
-    def tokenize(code: str) -> list:
+    def verify_syntax_of_section_dec(code: str, line: int) -> None:
         """
-        "Tokenizes" `code` for the parser.
+        Ensures that nothing follows the closing bracket in section declaration (except for a comment or trailing
+        whitespace / tab).
+        """
 
-        Index `0` is the variables dictionary.
+        # Looping through every character.
+        c: int = 0
+        end_of_section_dec: bool = False
 
-        Index `1` is the tasks dictionary.
+        while c < len(code):
+            if code[c] is R_BRACKET:
+                end_of_section_dec = True
+
+            elif end_of_section_dec:
+                if code[c] is WHITESPACE or code[c] is TAB:
+                    pass
+                elif code[c] is COMMENT:
+                    break
+                else:
+                    raise builddoc_unexpected_char_error(code[c], line, c+1)
+
+            else:
+                pass
+
+            c += 1  # 🏁
+
+    def map(code: str) -> list:
+        """
+        Maps variables to values and tasks to commands for the parser.
+
+        Index `0` is the variables dictionary (`dict[str, tuple[str, int]]`).
+
+        Index `1` is the tasks dictionary (`dict[str, list[tuple[str, int]]]`).
         """
 
         # STRINGS #
@@ -29,8 +56,8 @@ class lexer:
         reading_var_name: bool = True
 
         # DICTIONARIES #
-        var_dict: "dict[str, tuple[str, int]]" = {}
-        task_dict: "dict[str, list[str]]" = {}
+        var_dict: dict[str, tuple[str, int]] = {}
+        task_dict: dict[str, list[tuple[str, int]]] = {}
 
         try:
             lines = code.split("\n")
@@ -45,11 +72,11 @@ class lexer:
                     continue
                 elif lines[line].startswith(L_BRACKET):  # Sections.
                     section = ""
-                    chars: "list[str]" = [c for c in lines[line][1:]]
+                    chars: list[str] = [c for c in lines[line][1:]]
 
                     for c in range(len(chars)):
                         if chars[c] != R_BRACKET:
-                            if chars[c] in LOWER_LETTER or chars[c] in UPPER_LETTER or chars[c] == PERIOD or chars[c] == UNDERSCORE:
+                            if chars[c] in LOWER_LETTER or chars[c] in UPPER_LETTER or chars[c] is PERIOD or chars[c] is UNDERSCORE:
                                 section += chars[c]
                             else:
                                 raise builddoc_unexpected_char_error(
@@ -57,7 +84,8 @@ class lexer:
                         else:
                             # Checking if a section name was provided.
                             if len(section) > 0:
-                                # print(section)
+                                lexer.verify_syntax_of_section_dec(
+                                    lines[line], line+1)
                                 break
                             else:
                                 raise builddoc_syntax_error(
@@ -66,7 +94,7 @@ class lexer:
                     raise builddoc_syntax_error(
                         "line starts with whitespace or tab", " [...]", line+1, c+1)
                 else:
-                    chars: "list[str]" = [c for c in lines[line]]
+                    chars: list[str] = [c for c in lines[line]]
                     c: int = 0
 
                     # Looping through the characters.
@@ -75,8 +103,8 @@ class lexer:
                         # The parser will handle any syntax errors here.
                         if section == ".VARS":
                             if reading_var_name:
-                                if chars[c] in LOWER_LETTER or chars[c] in UPPER_LETTER or chars[c] == UNDERSCORE or chars[c] == ASSIN_OP:
-                                    if chars[c] == ASSIN_OP:
+                                if chars[c] in LOWER_LETTER or chars[c] in UPPER_LETTER or chars[c] is UNDERSCORE or chars[c] is ASSIN_OP:
+                                    if chars[c] is ASSIN_OP:
                                         reading_var_name = False
                                     else:
                                         var_name += chars[c]
@@ -90,7 +118,7 @@ class lexer:
                         else:
                             command += chars[c]
 
-                        c += 1  # End of loop.
+                        c += 1  # 🏁
 
                     if section == ".VARS":
                         # Set variable in dictionary, then reset variables used.
@@ -99,9 +127,9 @@ class lexer:
                         reading_var_name = True
                     else:
                         if section not in task_dict:
-                            task_dict.__setitem__(section, [command])
+                            task_dict.__setitem__(section, [(command, line+1)])
                         else:
-                            task_dict[section].append(command)
+                            task_dict[section].append((command, line+1))
 
                         command = ""
 

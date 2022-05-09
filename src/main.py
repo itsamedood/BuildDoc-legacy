@@ -39,7 +39,7 @@ class main:
             builddoc: TextIOWrapper = open(path, "r")
             code: str = builddoc.read()
 
-            dicts = lexer.tokenize(code=code)
+            dicts = lexer.map(code=code)
             parsed_code = parser.parse(dicts[0], dicts[1])
 
         # except:

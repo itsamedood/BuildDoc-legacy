@@ -1,17 +1,14 @@
 # EXAMPLE BUILDDOC #
 
 [.VARS] # Variables.
-NAME= 'itsamedood'
-AGE=16
-NICK=@USER
-ALL='Hello $NAME, aka $NICK! You are $AGE years old!'
+NAME='itsamedood'
+GREETING=Hi $NAME!
 
 [test] # Default task.
 %echo $NAME
-%echo NICK
-%echo ALL
+%echo $GREETING
 
-if ($NAME, "itsamedood")
+if ($NAME == "itsamedood")
 	%echo "Me :D"
 else
 	%echo "Not me D:"

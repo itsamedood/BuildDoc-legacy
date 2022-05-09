@@ -27,10 +27,10 @@ compile:
 	@echo 🛠 Compiling... 🛠
 	@echo -----------------
 ifeq ($(SYS), macos)
-	cxfreeze -c ./$(MAIN) --target-dir ./$(OUTPUT_PATH) --target-name $(BINARY)
+	cxfreeze -c ./$(MAIN) --target-dir ./$(OUTPUT_PATH) --target-name $(BINARY) | lolcat -f
 else ifeq ($(SYS), linux)
 # cxfreeze didn't wanna work on Linux for some reason.
-	pyinstaller --onefile ./$(MAIN) --distpath ./$(OUTPUT_PATH) --name $(BINARY) && rm -r ./build
+	pyinstaller --onefile ./$(MAIN) --distpath ./$(OUTPUT_PATH) --name $(BINARY) && rm -r ./build | lolcat -f
 endif
 # Empty echo to create gap between compilation output and run-time output.
 	@echo
@@ -46,4 +46,4 @@ run:
 release:
 	@echo 📁 Releasing... 📁
 	@echo -----------------
-	@echo ❗️Cannot release yet!
+	@echo ❗️Cannot release yet! | lolcat

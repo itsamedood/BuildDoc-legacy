@@ -20,6 +20,8 @@ ASSIN_OP: str = "="  # For creating variables.
 
 # === SYMBOLS === #
 COMMENT: str = "#"
+DOUBLE_QUOTE: str = '"'
+SINGLE_QUOTE: str = "'"
 PERIOD: str = "."
 COMMA: str = ","
 UNDERSCORE: str = "_"
@@ -32,5 +34,5 @@ LINEFEED: str = "\n"
 # === LISTS === #
 ALL_OPERATORS: "list[str]" = [
     MACRO_OP, VARBL_OP, ENVVR_OP,
-    ASSIN_OP
+    SYSTM_OP, ASSIN_OP
 ]
