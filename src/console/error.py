@@ -11,8 +11,8 @@ class builddoc_base_error(BaseException):
     """
 
     def __init__(self, message: str, code: int = 1) -> None:
-
-        print(message)
+        print(
+            f"builddoc: {color.ERROR}error{BOLD_WHITE}: {BOLD_WHITE}: {message}{color.RESET}")
         exit(code)
 
 
@@ -49,4 +49,11 @@ class builddoc_syntax_error(builddoc_base_error):
     def __init__(self, syntax_message: str, bad_syntax: str, line: int, character: int, code: int = 4) -> None:
         print(
             f"builddoc: {color.ERROR}error{BOLD_WHITE}: {BOLD_GRAY}[{line},{character}]{BOLD_WHITE}: Bad syntax ({syntax_message}): `{bad_syntax}`.{color.RESET}")
+        exit(code)
+
+
+class builddoc_config_error(builddoc_base_error):
+    def __init__(self, message: str, code: int = 1) -> None:
+        print(
+            f"builddoc-conf: {color.ERROR}error{BOLD_WHITE}: {BOLD_GRAY}: {message}{color.RESET}")
         exit(code)

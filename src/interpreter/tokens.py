@@ -8,14 +8,14 @@ L_BRACKET: str = "["
 R_BRACKET: str = "]"
 L_PARENTH: str = "("
 R_PARENTH: str = ")"
-L_BRACE: str = "}"
-R_BRACE: str = "{"
+L_BRACE: str = "{"
+R_BRACE: str = "}"
 
 # === OPERATORS === #
 MACRO_OP: str = "%"  # For calling macros.
 VARBL_OP: str = "$"  # For using variables declared in `.VARS`.
 ENVVR_OP: str = "@"  # For using env. vars.
-SYSTM_OP: str = "?"  # For getting information like OS name.
+SHELL_OP: str = "?"  # For getting information like OS name.
 ASSIN_OP: str = "="  # For creating variables.
 
 # === SYMBOLS === #
@@ -34,5 +34,5 @@ LINEFEED: str = "\n"
 # === LISTS === #
 ALL_OPERATORS: "list[str]" = [
     MACRO_OP, VARBL_OP, ENVVR_OP,
-    SYSTM_OP, ASSIN_OP
+    SHELL_OP, ASSIN_OP
 ]

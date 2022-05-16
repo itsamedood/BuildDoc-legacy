@@ -1,15 +1,20 @@
 # EXAMPLE BUILDDOC #
+# Comments are thrown around for testing that the lexer will properly ignore them.
 
 [.VARS] # Variables.
-NAME='itsamedood'
-GREETING=Hi $NAME!
+ONLINE_NAME='itsamedood' # Me!
+GREETING="Hi @USER, or should I say... $ONLINE_NAME!"
+OS=?{uname -s | tr A-Z a-z} # OS name.
 
 [test] # Default task.
 %echo $NAME
 %echo $GREETING
+%echo $OS
 
-if ($NAME == "itsamedood")
-	%echo "Me :D"
+if ($OS == "darwin")
+	%echo "MacOS!"
+elif ($OS == "linux")
+	%echo "Linux!"
 else
-	%echo "Not me D:"
+	%echo "Windows..."
 endif

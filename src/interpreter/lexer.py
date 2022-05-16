@@ -5,7 +5,7 @@ from console.error import *
 # This took way too long, because I started off trying to read character by character, which caused like
 # a million bugs, so then I tried it 2 MORE TIMES, before giving up and reading line by line, then for each line,
 # THEN I read character by character.
-class lexer:
+class Lexer:
     """
     Lexer class.
     """
@@ -54,6 +54,9 @@ class lexer:
 
         # BOOLEANS #
         reading_var_name: bool = True
+        single_quote: bool = False
+        double_quote: bool = False
+        escaping: bool = False
 
         # DICTIONARIES #
         var_dict: dict[str, tuple[str, int]] = {}
@@ -84,7 +87,7 @@ class lexer:
                         else:
                             # Checking if a section name was provided.
                             if len(section) > 0:
-                                lexer.verify_syntax_of_section_dec(
+                                Lexer.verify_syntax_of_section_dec(
                                     lines[line], line+1)
                                 break
                             else:
@@ -112,7 +115,27 @@ class lexer:
                                     raise builddoc_unexpected_char_error(
                                         chars[c], line+1, c+1)
                             else:
-                                var_value += chars[c]
+                                if chars[c] is SINGLE_QUOTE:
+                                    single_quote = not single_quote
+
+                                    if double_quote:
+                                        raise builddoc_syntax_error(
+                                            "non-matching string symbols", "\" -> '", line+1, c+1)
+
+                                elif chars[c] is DOUBLE_QUOTE:
+                                    double_quote = not double_quote
+
+                                    if single_quote:
+                                        raise builddoc_syntax_error(
+                                            "non-matching string symbols", "' -> \"", line+1, c+1)
+
+                                elif chars[c] is COMMENT:
+                                    if chars[c-1] is WHITESPACE or TAB:
+                                        var_value = var_value[0:-1]
+                                    break
+
+                                elif chars[c] is not SINGLE_QUOTE or not DOUBLE_QUOTE:
+                                    var_value += chars[c]
 
                         # Reading commands.
                         else:
@@ -121,13 +144,21 @@ class lexer:
                         c += 1  # 🏁
 
                     if section == ".VARS":
-                        # Set variable in dictionary, then reset variables used.
-                        var_dict.__setitem__(var_name, (var_value, line+1))
-                        var_name, var_value = "", ""
-                        reading_var_name = True
+                        if single_quote:
+                            raise builddoc_syntax_error(
+                                "unclosed string", "'... (or) \"...", line+1, c+1)
+                        elif double_quote:
+                            raise builddoc_syntax_error(
+                                "unclosed string", '"...', line+1, c+1)
+                        else:
+                            # Set variable in dictionary, then reset variables used.
+                            var_dict.__setitem__(var_name, (var_value, line+1))
+                            var_name, var_value = "", ""
+                            single_quote, double_quote = False, False
+                            reading_var_name = True
                     else:
                         if section not in task_dict:
-                            task_dict.__setitem__(section, [(command, line+1)])
+                            task_dict[section] = [(command, line+1)]
                         else:
                             task_dict[section].append((command, line+1))
 

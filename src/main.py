@@ -1,13 +1,21 @@
+from console.error import builddoc_error
 from io import TextIOWrapper
 from sys import argv
-from console.error import builddoc_error
-from interpreter.lexer import lexer
+from interpreter.lexer import Lexer
+from interpreter.parser import Parser
+from config.config import Config
 import os
 
-from interpreter.parser import parser
+
+"""
+This comment / complaint applies almost everywhere:
+Although the parameters ("str | None") without quotation marks is valid syntax (str | None), but in certain cases,
+it breaks everything for some reason.
+Words cannot describe my confusion.
+"""
 
 
-class main:
+class Main:
     """
     Starting point, where everything needed to initialize BuildDoc is stuffed into this class.
     """
@@ -39,8 +47,12 @@ class main:
             builddoc: TextIOWrapper = open(path, "r")
             code: str = builddoc.read()
 
-            dicts = lexer.map(code=code)
-            parsed_code = parser.parse(dicts[0], dicts[1])
+            # Read `.builddoc-conf.json`.
+            Config.read_configs()
+
+            # Lexer & Parser.
+            dicts = Lexer.map(code)
+            parsed_code = Parser.parse(dicts[0], dicts[1])
 
         # except:
         #     raise builddoc_error("Internal error.")
@@ -49,7 +61,7 @@ class main:
 
 
 if __name__ == "__main__":
-    MAIN: main = main()
+    MAIN: Main = Main()
     path: "str | None" = MAIN.check_for_builddoc()
 
     try:
