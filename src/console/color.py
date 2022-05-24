@@ -1,4 +1,4 @@
-class color:
+class Color:
     """
     Class for printing colored text, using ANSI codes.
     """

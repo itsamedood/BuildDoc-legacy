@@ -79,11 +79,12 @@ class Lexer:
 
                     for c in range(len(chars)):
                         if chars[c] != R_BRACKET:
-                            if chars[c] in LOWER_LETTER or chars[c] in UPPER_LETTER or chars[c] is PERIOD or chars[c] is UNDERSCORE:
+                            if chars[c] in LOWER_LETTER or chars[c] in UPPER_LETTER or chars[c] is PERIOD or chars[c] is UNDERSCORE or chars[c] is HYPHEN:
                                 section += chars[c]
                             else:
                                 raise builddoc_unexpected_char_error(
                                     chars[c], line+1, c+1)
+
                         else:
                             # Checking if a section name was provided.
                             if len(section) > 0:
@@ -93,9 +94,11 @@ class Lexer:
                             else:
                                 raise builddoc_syntax_error(
                                     "Missing section name", "[]", line+1, c+1)
+
                 elif lines[line].startswith(WHITESPACE) or lines[line].startswith(TAB) and section == ".VARS":
                     raise builddoc_syntax_error(
-                        "line starts with whitespace or tab", " [...]", line+1, c+1)
+                        "line starts with whitespace or tab", lines[line], line+1, c+1)
+
                 else:
                     chars: list[str] = [c for c in lines[line]]
                     c: int = 0
@@ -137,6 +140,11 @@ class Lexer:
                                 elif chars[c] is not SINGLE_QUOTE or not DOUBLE_QUOTE:
                                     var_value += chars[c]
 
+                        # Catching unwanted characters outside of any sections.
+                        elif len(section) < 1:
+                            raise builddoc_unexpected_char_error(
+                                chars[c], line, c+1)
+
                         # Reading commands.
                         else:
                             command += chars[c]
@@ -146,7 +154,7 @@ class Lexer:
                     if section == ".VARS":
                         if single_quote:
                             raise builddoc_syntax_error(
-                                "unclosed string", "'... (or) \"...", line+1, c+1)
+                                "unclosed string", "'...", line+1, c+1)
                         elif double_quote:
                             raise builddoc_syntax_error(
                                 "unclosed string", '"...', line+1, c+1)

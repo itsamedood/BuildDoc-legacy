@@ -22,8 +22,7 @@ class Config:
                     else:
                         return None
             except:
-                builddoc_warning(
-                    "Directory '~/.builddoc' not found.")
+                builddoc_warning("Directory '~/.builddoc' not found.")
 
         # else:  # Windows.
         #     PATH: str = "C:\\.builddoc\\.builddoc-conf.json"
@@ -52,8 +51,7 @@ class Config:
                     if obj in VALID_CONFIGURATIONS:
                         global_vars: dict[str, str] = data[obj]
                     else:
-                        raise builddoc_config_error(
-                            f"Invalid configuration: '{obj}'.")
+                        raise builddoc_config_error(f"Invalid configuration: '{obj}'.")
 
             except:
                 raise builddoc_base_error("Config file error.")
@@ -61,11 +59,9 @@ class Config:
                 conf_file.close()
         else:
             if platform == "darwin" or platform == "linux" or platform == "linux2":  # MacOS or Linux.
-                builddoc_warning(
-                    "No '.builddoc-conf.json' found in '~/.builddoc'.")
+                builddoc_warning("No '.builddoc-conf.json' found in '~/.builddoc'.")
             else:
-                builddoc_warning(
-                    "No 'C:\\.builddoc\\.builddoc-conf.json' found in 'C:\\.builddoc'.")
+                builddoc_warning("No 'C:\\.builddoc\\.builddoc-conf.json' found in 'C:\\.builddoc'.")
 
         return
 

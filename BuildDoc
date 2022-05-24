@@ -4,17 +4,21 @@
 [.VARS] # Variables.
 ONLINE_NAME='itsamedood' # Me!
 GREETING="Hi @USER, or should I say... $ONLINE_NAME!"
-OS=?{uname -s | tr A-Z a-z} # OS name.
+OS=?{uname -s | tr A-Z a-z}
+EVERYTHING="I ($ONLINE_NAME AKA @USER) am using ?{uname -s | tr A-Z a-z}."
 
-[test] # Default task.
-%echo $NAME
-%echo $GREETING
-%echo $OS
+[test] # Default task. Can be run by executing `build test` or just `build`.
+%goto(other-test) # Faster than adding `build other-test` because the script would have to be read and parsed again.
+echo $NAME
+echo '$GREETING'
+&echo "$OS"
 
-if ($OS == "darwin")
-	%echo "MacOS!"
-elif ($OS == "linux")
-	%echo "Linux!"
-else
-	%echo "Windows..."
-endif
+[other-test] # Can only be run by executing 'build other-test', or by using the `goto` macro.
+echo ":D"
+#if ($OS == "darwin" && $ONLINE_NAME == "itsamedood")
+#	&echo("MacBook for dood!")
+#elif ($OS == "linux" || @USER == "jr")
+#	&echo("Linux for me!")
+#else
+#	&echo("Windows...")
+#endif

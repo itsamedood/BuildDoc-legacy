@@ -1,4 +1,4 @@
-from console.error import builddoc_error
+from console.error import builddoc_base_error, builddoc_error
 from io import TextIOWrapper
 from sys import argv
 from interpreter.lexer import Lexer
@@ -52,10 +52,17 @@ class Main:
 
             # Lexer & Parser.
             dicts = Lexer.map(code)
-            parsed_code = Parser.parse(dicts[0], dicts[1])
+            parsed_dicts = Parser.parse(dicts[0], dicts[1])
+            parsed_vars = parsed_dicts[0]
+            parsed_tasks = parsed_dicts[1]
+
+        except KeyboardInterrupt:
+            print("")
+            raise builddoc_base_error("Keyboard interrupted.", 255)
 
         # except:
-        #     raise builddoc_error("Internal error.")
+        #     raise builddoc_base_error("Internal error.")
+
         finally:
             builddoc.close()  # Always close an open file!
 

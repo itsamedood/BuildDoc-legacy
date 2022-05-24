@@ -15,7 +15,7 @@ R_BRACE: str = "}"
 MACRO_OP: str = "%"  # For calling macros.
 VARBL_OP: str = "$"  # For using variables declared in `.VARS`.
 ENVVR_OP: str = "@"  # For using env. vars.
-SHELL_OP: str = "?"  # For getting information like OS name.
+SHELL_OP: str = "?"  # For executing shell commands.
 ASSIN_OP: str = "="  # For creating variables.
 
 # === SYMBOLS === #
@@ -24,7 +24,10 @@ DOUBLE_QUOTE: str = '"'
 SINGLE_QUOTE: str = "'"
 PERIOD: str = "."
 COMMA: str = ","
+HYPHEN: str = "-"
 UNDERSCORE: str = "_"
+AND: str = "&"  # `&` = Silencer operator (prefix). / `&&` = AND.
+PIPE: str = "|"  # `|` = Nothing. / `||` = OR.
 
 # === OTHER === #
 WHITESPACE: str = " "

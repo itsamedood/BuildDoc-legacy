@@ -1,0 +1,2 @@
+cxfreeze=6.10
+pyinstaller=5.0.1
