@@ -1,5 +1,16 @@
 ![builddoc-banner](./docs/assets/builddoc-bg.png)
-[![builddoc-license](https://img.shields.io/github/license/itsamedood/BuildDoc?color=blue&style=for-the-badge)](https://github.com/itsamedood/BuildDoc/blob/main/LICENSE) [![builddoc-github-stars](https://img.shields.io/github/stars/itsamedood/BuildDoc?color=blue&style=for-the-badge)](https://github.com/itsamedood/BuildDoc)
+<p align="center">
+	<a href="https://github.com/itsamedood/BuildDoc/blob/main/LICENSE">
+		<img src="https://img.shields.io/github/license/itsamedood/BuildDoc?color=blue&style=for-the-badge">
+	</a>
+	<a href="https://github.com/itsamedood/BuildDoc">
+		<img src="https://img.shields.io/lgtm/grade/python/github/itsamedood/BuildDoc?style=for-the-badge">
+	</a>
+	<a href="https://github.com/itsamedood/BuildDoc">
+		<img src="https://img.shields.io/github/stars/itsamedood/BuildDoc?style=for-the-badge">
+	</a>
+</p>
+
 # **BuildDoc Repository**
 - ### [Documentation](./docs/00-Welcome.md)
 - ### [Basic Installation](#basic-installation)

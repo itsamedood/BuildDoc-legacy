@@ -4,7 +4,7 @@
 |                      Variables                       |    ✅     |    ✅     |
 |             Usable shell command outputs             |    ✅     |    ✅     |
 |                Conditional statements                |    ✅     |    ✅     |
-|                   Built-in macros                    |    ❌     |    ✅     |
+|                   Built-in macros                    |    ✅     |    ✅     |
 | "Silencer" symbol (`@` in Makefile, `&` in BuildDoc) |    ✅     |    ✅     |
 |             Allows for multiple "tasks"              |    ✅     |    ✅     |
 |                      For-loops                       |    ✅     |    ❌     |

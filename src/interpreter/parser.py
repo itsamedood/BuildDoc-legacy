@@ -1,278 +1,243 @@
 from os import getenv, popen
-from console.error import builddoc_base_error, builddoc_error, builddoc_syntax_error, builddoc_unexpected_char_error
+from console.error import *
 from interpreter.tokens import *
 
 
+# MUCH more organized now!
 class Parser:
     """
     BuildDoc parser.
     """
 
     @staticmethod
-    def verify_syntax_of_macro(macro: str, line: int) -> None:
+    def parse_line(line: str, line_num: int, parsed_vars: "dict[str, tuple[str, int]]") -> str:
         """
-        Ensures that nothing follows the closing parenthesis in a macro call, as well as checking that the call is
-        syntatically correct.
+        Parses any and all variables on `line`.
         """
-
-        c: int = 0
-        paren_open: bool = False
-        paren_good: bool = False
-
-        while c < len(macro):
-            if macro[c] is L_PARENTH:
-                paren_open = True
-            elif macro[c] is R_PARENTH:
-                if paren_open:
-                    paren_good, paren_open = True, False
-                else:
-                    raise builddoc_syntax_error(
-                        "invalid macro syntax", macro, line, c+1)
-
-            else:
-                if paren_open:
-                    pass
-                elif paren_good:
-                    if macro[c] is WHITESPACE or macro[c] is TAB:
-                        pass
-                    elif macro[c] is COMMENT:
-                        break
-                    else:
-                        raise builddoc_unexpected_char_error(
-                            macro[c], line, c+1)
-                else:
-                    pass
-
-            c += 1  # 🏁
-
-    def read_macro(macro: str, value: str, line: int) -> None:
-        """
-        Reads and executes the given macro.
-        """
-
-        if macro == "goto":
-            print(f"go over to '{value}'.")
-        else:
-            raise builddoc_error(
-                f"Invalid macro: '{macro}'.", line, len(macro))
-
-    def parse(vars_dict: "dict[str, tuple[str, int]]", tasks_dict: "dict[str, list[tuple[str, int]]]") -> "tuple[dict[str, str], dict[str, list[str]]]":
-        """
-        Parses variables and commands from dictionaries, provided by the lexer.
-        """
-
-        # VARIABLES FOR PARSING VARIABLES #
 
         # STRINGS #
-        variable: str = ""
-        env_variable: str = ""
-        shell_variable: str = ""
+        variable = ""
+        env_variable = ""
+        shell_variable = ""
 
         # BOOLEANS #
-        reading_var: bool = False
-        reading_env_var: bool = False
-        reading_shell_var: bool = False
-        shell_var_open: bool = False
-        parsed_vars_dict: "dict[str, str]" = {}
-        parsed_tasks_dict: "dict[str, list[str]]" = {}
+        reading_var = False
+        reading_env_var = False
+        reading_shell_var = False
+        shell_var_open = False
 
-        # Parsing variables.
-        for var in vars_dict:
-            value: str = vars_dict[var][0]
-            line: int = vars_dict[var][1]
-
-            if len(var) > 0:
-                parsed_vars_dict[var] = value
-
-            if value.startswith(WHITESPACE) or value.startswith(TAB):
-                raise builddoc_syntax_error(
-                    "space/tab between `=` and value", f"{var}= {value}", line, len(var)+2)
-            else:
-                # Looping through every character in the value.
-                for c in range(len(value)):
-                    # Operators.
-                    if value[c] is VARBL_OP:
+        for c in range(len(line)):
+            if len(line) > 0:
+                try:
+                    if line[c] is VARBL_OP:
                         reading_var = True
-                    elif value[c] is ENVVR_OP:
+                    elif line[c] is ENVVR_OP:
                         reading_env_var = True
-                    elif value[c] is SHELL_OP:
+                    elif line[c] is SHELL_OP:
                         reading_shell_var = True
 
-                    # Actual parsing.
                     else:
                         if reading_var:
-                            if value[c] in LOWER_LETTER or value[c] in UPPER_LETTER or value[c] is UNDERSCORE:
-                                variable += value[c]
+                            if line[c] in LOWER_LETTER or line[c] in UPPER_LETTER or line[c] is PERIOD or line[c] is UNDERSCORE:
+                                variable += line[c]
                             else:
                                 if not len(variable) > 0:
                                     raise builddoc_syntax_error(
-                                        "no variable name given at `$` in value", value, line, c+1)
+                                        "no variable name given at `$` in value", line, line_num, c+1)
 
                                 try:
-                                    parsed_vars_dict[var] = parsed_vars_dict[var].replace(
-                                        f"${variable}", parsed_vars_dict[variable])
+                                    line = line.replace(
+                                        f"${variable}", parsed_vars[variable][0])
                                 except KeyError:
                                     raise builddoc_error(
-                                        f"Unknown variable: '{variable}'.", line, c+1)
+                                        f"Unknown variable: `{variable}`.", line_num, c+1)
 
                                 variable = ""
                                 reading_var = False
 
                         elif reading_env_var:
-                            if value[c] in LOWER_LETTER or value[c] in UPPER_LETTER or value[c] is UNDERSCORE:
-                                env_variable += value[c]
+                            if line[c] in LOWER_LETTER or line[c] in UPPER_LETTER or line[c] is UNDERSCORE:
+                                env_variable += line[c]
                             else:
                                 if not len(env_variable) > 0:
                                     raise builddoc_syntax_error(
-                                        "no env variable name given at `@` in value", value, line, c+1)
+                                        "no env variable name given at `@` in value", line, line_num, c+1)
 
                                 try:
-                                    parsed_vars_dict[var] = parsed_vars_dict[var].replace(
+                                    line = line.replace(
                                         f"@{env_variable}", getenv(env_variable))
                                 except KeyError:
                                     raise builddoc_error(
-                                        f"Unknown env variable: '{env_variable}'.", line, c+1)
+                                        f"Unknown env variable: `{env_variable}`.", line_num, c+1)
+
                                 env_variable = ""
                                 reading_env_var = False
 
                         elif reading_shell_var:
-                            if value[c] is L_BRACE:
-                                if value[c-1] is SHELL_OP:
+                            if line[c] is L_BRACE:
+                                if line[c-1] is SHELL_OP:
                                     shell_var_open = True
                                 else:
                                     raise builddoc_syntax_error(
-                                        "expected '{' to precede '?'", value, line, c+1)
-
-                            elif value[c] is R_BRACE:
+                                        "expected '{' to precede '?'", line, line_num, c+1)
+                            elif line[c] is R_BRACE:
                                 if shell_var_open:
                                     if len(shell_variable) > 0:
                                         try:
-                                            output: str = popen(
+                                            output = popen(
                                                 shell_variable).read()
 
                                             if output[-1] is LINEFEED:
                                                 output = output[0:-1]
 
-                                            parsed_vars_dict[var] = parsed_vars_dict[var].replace(
+                                            line = line.replace(
                                                 f"?{L_BRACE}{shell_variable}{R_BRACE}", output)
+
                                             shell_variable = ""
                                             shell_var_open, reading_shell_var = False, False
-
                                         except:
                                             raise builddoc_error(
-                                                f"Failed to execute shell command: {L_BRACE}{shell_variable}{R_BRACE}", line, c+1)
-
+                                                f"Failed to execute shell command: {L_BRACE}{shell_variable}{R_BRACE}", line_num, c+1)
                                     else:
                                         raise builddoc_syntax_error(
-                                            "no shell command given at `?{` in value", value, line, c+1)
-
+                                            "no shell command given at `?{` in value", line, line_num, c+1)
                                 else:
                                     raise builddoc_syntax_error(
-                                        "closing '}' with no '{'", value, line, c+1)
-
+                                        "closing '}' with no '{'", line, line_num, c+1)
                             else:
-                                shell_variable += value[c]
+                                shell_variable += line[c]
+                except IndexError:  # Absolutely love Python sometimes...
+                    pass
 
-            # Fallbacks for parsing variables.
-            # If the value does NOT end with a punctuation, then it breaks.
-            # These if-statements counter that behavior.
+        # Fallbacks for parsing variables.
+        # If the value does NOT end with a punctuation mark, then it breaks.
+        # These if-statements counter that behavior.
 
-            # Regular variables.
-            if len(variable) > 0:
-                try:
-                    parsed_vars_dict[var] = value.replace(
-                        f"${variable}", vars_dict[variable][0])
-                except KeyError:
-                    raise builddoc_error(
-                        f"Unknown variable: '{variable}'.", line, c+1)
+        # Regular variables.
+        if len(variable) > 0:
+            try:
+                line = line.replace(
+                    f"${variable}", parsed_vars[variable][0])
+            except KeyError:
+                raise builddoc_error(
+                    f"Unknown variable: `{variable}`.", line_num, len(variable))
 
-                variable = ""
-                reading_var = False
+        # Env variables.
+        if len(env_variable) > 0:
+            try:
+                line = line.replace(
+                    f"@{env_variable}", getenv(env_variable))
+            except KeyError:
+                raise builddoc_error(
+                    f"Unknown env variable: `{env_variable}`.", line_num, len(env_variable))
 
-            # Env variables.
-            if len(env_variable) > 0:
-                try:
-                    parsed_vars_dict[var] = value.replace(
-                        f"@{env_variable}", getenv(env_variable))
-                except KeyError:
-                    raise builddoc_error(
-                        f"Unknown env variable: '{env_variable}'.", line, c+1)
-                env_variable = ""
-                reading_env_var = False
+        # Shell commands.
+        # This isn't so much a fallback as it is a syntax error catcher.
+        if len(shell_variable) > 0:
+            raise builddoc_base_error(f"Shell command never closed: '{line}'.")
 
-            # Shell commands.
-            # This isn't a fallback, it's more of a syntax error catcher.
-            if len(shell_variable) > 0:
-                raise builddoc_base_error(
-                    f"Shell command never closed: '{value}'.")
+        return line
 
-        print(f"PARSED VARS: {parsed_vars_dict}")
+    @staticmethod
+    def parse_values(vars_dict: "dict[str, tuple[str, int]]") -> "dict[str, tuple[str, int]]":
+        """
+        Parses all variable values.
+        """
 
-        # VARIABLES FOR PARSING TASKS #
+        parsed_vars_dict: dict[str, str] = {}
 
-        # STRINGS #
-        macro_name: str = ""
-        macro_contents: str = ""
-        condition: str = ""
+        # Parsing variables.
+        for var in vars_dict:
+            value = vars_dict[var][0]
+            line = vars_dict[var][1]
+            parsed_value = Parser.parse_line(value, line, vars_dict)
 
-        # BOOLEANS #
-        reading_macro: bool = False
-        done_with_macro_name: bool = False
-        silenced: bool = False
-        reading_condt: bool = False
-        in_if_statement: bool = False
+            if parsed_value is not value and len(parsed_value) > 0:
+                parsed_vars_dict[var] = parsed_value
 
-        # Parsing tasks.
-        for task in tasks_dict:
-            if len(task) < 1:
-                continue
-            else:
-                tuples: list[tuple[str, int]] = [c for c in tasks_dict[task]]
+        return parsed_vars_dict
 
-                for tup in tuples:
-                    cmd = tup[0]
-                    line = tup[1]
+    # @staticmethod
+    # def parse_tasks(tasks_dict: "dict[str, list[tuple[str, int]]]") -> "dict[str, list[tuple[str, int]]]":
+    #     """
+    #     Parses all commands in each task.
+    #     """
 
-                    if len(cmd) < 1:
-                        continue
-                    else:
-                        # print(f"{cmd} @ {line}")
+    #     # STRINGS #
+    #     command = ""
+    #     macro_name = ""
+    #     macro_contents = ""
+    #     condition = ""
 
-                        for c in range(len(cmd)):
-                            if c < 1:
-                                if cmd[c] is MACRO_OP:
-                                    reading_macro = True
-                                elif cmd[c] is AND:
-                                    silenced = True
+    #     # BOOLEANS #
+    #     reading_macro = False
+    #     done_with_macro_name = False
+    #     silenced = False
 
-                                elif cmd[0] is WHITESPACE or cmd[0] is TAB and not in_if_statement:
-                                    raise builddoc_syntax_error(
-                                        "line starts with whitespace or tab", cmd, line, c+1)
+    #     # OTHER #
+    #     parsed_tasks_dict: dict[str, list[str]] = {}
 
-                            else:
-                                if reading_macro:  # Macro.
-                                    if cmd[c] is not L_PARENTH and not done_with_macro_name:
-                                        macro_name += cmd[c]
-                                    else:
-                                        done_with_macro_name = True
+    #     # Parsing tasks.
+    #     for task in tasks_dict:
+    #         if len(task) < 1:
+    #             continue
+    #         else:
+    #             tuples: list[tuple[str, int]] = [c for c in tasks_dict[task]]
 
-                                        if cmd[c] is L_PARENTH:
-                                            continue
-                                        elif cmd[c] is R_PARENTH:
-                                            Parser.verify_syntax_of_macro(
-                                                cmd, line)
-                                            Parser.read_macro(
-                                                macro_name, macro_contents, line)
+    #             for tup in tuples:
+    #                 cmd = tup[0]
+    #                 line = tup[1]
 
-                                            reading_macro, done_with_macro_name = False, False
-                                            macro_name, macro_contents = "", ""
+    #                 if len(cmd) < 1:
+    #                     continue
 
-                                        else:
-                                            macro_contents += cmd[c]
-                                elif reading_condt:  # If statement of some kind.
-                                    pass
-                                else:  # Just a command.
-                                    pass
+    #     return parsed_tasks_dict
 
-        # print(f"PARSED TASKS: {parsed_tasks_dict}")
-        return (parsed_vars_dict, parsed_tasks_dict)
+    # @staticmethod
+    # def verify_syntax_of_macro(macro: str, line: int) -> None:
+    #     """
+    #     Ensures that nothing follows the closing parenthesis in a macro call, as well as checking that the call is
+    #     syntatically correct.
+    #     """
+
+    #     c = 0
+    #     paren_open = False
+    #     paren_good = False
+
+    #     while c < len(macro):
+    #         if macro[c] is L_PARENTH:
+    #             paren_open = True
+    #         elif macro[c] is R_PARENTH:
+    #             if paren_open:
+    #                 paren_good, paren_open = True, False
+    #             else:
+    #                 raise builddoc_syntax_error(
+    #                     "invalid macro syntax", macro, line, c+1)
+
+    #         else:
+    #             if paren_open:
+    #                 pass
+    #             elif paren_good:
+    #                 if macro[c] is WHITESPACE or macro[c] is TAB:
+    #                     pass
+    #                 elif macro[c] is COMMENT:
+    #                     break
+    #                 else:
+    #                     raise builddoc_unexpected_char_error(
+    #                         macro[c], line, c+1)
+    #             else:
+    #                 pass
+
+    #         c += 1  # 🏁
+
+    # @staticmethod
+    # def read_macro(macro: str, value: str, line: int) -> None:
+    #     """
+    #     Reads and executes the given macro.
+    #     """
+
+    #     if macro == "goto":
+    #         print(f"go over to '{value}'.")
+    #     else:
+    #         raise builddoc_error(
+    #             f"Invalid macro: '{macro}'.", line, len(macro))

@@ -12,8 +12,8 @@ class Config:
     @staticmethod
     def check_for_config_file() -> "str | None":
         if platform == "darwin" or platform == "linux" or platform == "linux2":  # MacOS or Linux.
-            USER: str = os.getenv("USER")
-            PATH: str = f"/Users/{USER}/.builddoc/.builddoc-conf.json"
+            USER = os.getenv("USER")
+            PATH = f"/Users/{USER}/.builddoc/.builddoc-conf.json"
 
             try:
                 for entry in os.scandir(f"/Users/{USER}/.builddoc"):
@@ -38,7 +38,7 @@ class Config:
 
     @staticmethod
     def read_configs():
-        path: "str | None" = Config.check_for_config_file()
+        path = Config.check_for_config_file()
         VALID_CONFIGURATIONS: list[str] = ["vars"]
 
         if path is not None:
@@ -49,9 +49,10 @@ class Config:
 
                 for obj in data:
                     if obj in VALID_CONFIGURATIONS:
-                        global_vars: dict[str, str] = data[obj]
+                        global_vars = data[obj]
                     else:
-                        raise builddoc_config_error(f"Invalid configuration: '{obj}'.")
+                        raise builddoc_config_error(
+                            f"Invalid configuration: '{obj}'.")
 
             except:
                 raise builddoc_base_error("Config file error.")
@@ -59,9 +60,11 @@ class Config:
                 conf_file.close()
         else:
             if platform == "darwin" or platform == "linux" or platform == "linux2":  # MacOS or Linux.
-                builddoc_warning("No '.builddoc-conf.json' found in '~/.builddoc'.")
+                builddoc_warning(
+                    "No '.builddoc-conf.json' found in '~/.builddoc'.")
             else:
-                builddoc_warning("No 'C:\\.builddoc\\.builddoc-conf.json' found in 'C:\\.builddoc'.")
+                builddoc_warning(
+                    "No 'C:\\.builddoc\\.builddoc-conf.json' found in 'C:\\.builddoc'.")
 
         return
 

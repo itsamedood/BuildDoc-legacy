@@ -1,2 +1,4 @@
+/.mypy_cache
 /bin
 .DS_Store
+*.log

@@ -1,5 +1,4 @@
 from console.error import builddoc_base_error, builddoc_error
-from io import TextIOWrapper
 from sys import argv
 from interpreter.lexer import Lexer
 from interpreter.parser import Parser
@@ -20,42 +19,40 @@ class Main:
     Starting point, where everything needed to initialize BuildDoc is stuffed into this class.
     """
 
-    cwd = os.getcwd()
-
-    def __init__(self) -> None:
-        pass
-
-    def check_for_builddoc(self) -> "str | None":
+    def check_for_builddoc() -> "str | None":
         """
         Checks to see if `./BuildDoc` exists, returning the path to it if it does. If it doesn't,
         `None` is returned.
         """
 
-        for entry in os.scandir(self.cwd):
+        cwd = os.getcwd()
+
+        for entry in os.scandir(cwd):
             if entry.is_file() and entry.name.lower() == "builddoc":
-                return f"{self.cwd}/BuildDoc"
+                return f"{cwd}/BuildDoc"
             else:
                 continue
+
         return None
 
-    def run(self, path: str, task: "str | None") -> None:
+    def run(path: str, task: "str | None") -> None:
         """
         Maps, parses, and runs `task` in the BuildDoc.
         """
 
         try:
-            builddoc: TextIOWrapper = open(path, "r")
-            code: str = builddoc.read()
+            builddoc = open(path, "r")
+            code = builddoc.read()
 
             # Read `.builddoc-conf.json`.
-            Config.read_configs()
+            # Config.read_configs()
 
             # Lexer & Parser.
             dicts = Lexer.map(code)
-            parsed_dicts = Parser.parse(dicts[0], dicts[1])
-            parsed_vars = parsed_dicts[0]
-            parsed_tasks = parsed_dicts[1]
+            parsed_vars = Parser.parse_values(dicts[0])
+            # parsed_tasks = Parser.parse_tasks(dicts[1])
 
+            print(parsed_vars)
         except KeyboardInterrupt:
             print("")
             raise builddoc_base_error("Keyboard interrupted.", 255)
@@ -68,15 +65,15 @@ class Main:
 
 
 if __name__ == "__main__":
-    MAIN: Main = Main()
-    path: "str | None" = MAIN.check_for_builddoc()
+    PATH = Main.check_for_builddoc()
 
     try:
-        assert path is not None
+        assert PATH is not None
 
         if len(argv) > 1:
-            MAIN.run(path, argv[1])
+            Main.run(PATH, argv[1])
         else:
-            MAIN.run(path, None)
+            Main.run(PATH, None)
+
     except AssertionError:
         raise builddoc_error("No BuildDoc found.")

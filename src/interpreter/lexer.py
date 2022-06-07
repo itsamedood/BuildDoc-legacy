@@ -10,6 +10,7 @@ class Lexer:
     Lexer class.
     """
 
+    @staticmethod
     def verify_syntax_of_section_dec(code: str, line: int) -> None:
         """
         Ensures that nothing follows the closing bracket in section declaration (except for a comment or trailing
@@ -17,8 +18,8 @@ class Lexer:
         """
 
         # Looping through every character.
-        c: int = 0
-        end_of_section_dec: bool = False
+        c = 0
+        end_of_section_dec = False
 
         while c < len(code):
             if code[c] is R_BRACKET:
@@ -37,6 +38,7 @@ class Lexer:
 
             c += 1  # 🏁
 
+    @staticmethod
     def map(code: str) -> list:
         """
         Maps variables to values and tasks to commands for the parser.
@@ -47,16 +49,16 @@ class Lexer:
         """
 
         # STRINGS #
-        section: str = ""
-        command: str = ""
-        var_name: str = ""
-        var_value: str = ""
+        section = ""
+        command = ""
+        var_name = ""
+        var_value = ""
 
         # BOOLEANS #
-        reading_var_name: bool = True
-        single_quote: bool = False
-        double_quote: bool = False
-        escaping: bool = False
+        reading_var_name = True
+        single_quote = False
+        double_quote = False
+        escaped = False
 
         # DICTIONARIES #
         var_dict: dict[str, tuple[str, int]] = {}
@@ -75,7 +77,7 @@ class Lexer:
                     continue
                 elif lines[line].startswith(L_BRACKET):  # Sections.
                     section = ""
-                    chars: list[str] = [c for c in lines[line][1:]]
+                    chars = [c for c in lines[line][1:]]
 
                     for c in range(len(chars)):
                         if chars[c] != R_BRACKET:
@@ -100,8 +102,8 @@ class Lexer:
                         "line starts with whitespace or tab", lines[line], line+1, c+1)
 
                 else:
-                    chars: list[str] = [c for c in lines[line]]
-                    c: int = 0
+                    chars = [c for c in lines[line]]
+                    c = 0
 
                     # Looping through the characters.
                     while c < len(chars):
