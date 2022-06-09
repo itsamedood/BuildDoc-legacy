@@ -3,14 +3,13 @@ from console.error import *
 from interpreter.tokens import *
 
 
-# MUCH more organized now!
 class Parser:
     """
     BuildDoc parser.
     """
 
     @staticmethod
-    def parse_line(line: str, line_num: int, parsed_vars: "dict[str, tuple[str, int]]") -> str:
+    def parse_line(line: str, line_num: int, parsed_vars: "dict[str, tuple[str, int]]", line_is_cmd=False) -> str:
         """
         Parses any and all variables on `line`.
         """
@@ -46,8 +45,12 @@ class Parser:
                                         "no variable name given at `$` in value", line, line_num, c+1)
 
                                 try:
-                                    line = line.replace(
-                                        f"${variable}", parsed_vars[variable][0])
+                                    if line_is_cmd:
+                                        line = line.replace(
+                                            f"${variable}", parsed_vars[variable])
+                                    else:
+                                        line = line.replace(
+                                            f"${variable}", parsed_vars[variable][0])
                                 except KeyError:
                                     raise builddoc_error(
                                         f"Unknown variable: `{variable}`.", line_num, c+1)
@@ -79,7 +82,7 @@ class Parser:
                                     shell_var_open = True
                                 else:
                                     raise builddoc_syntax_error(
-                                        "expected '{' to precede '?'", line, line_num, c+1)
+                                        "expected `{` to precede `?`", line, line_num, c+1)
                             elif line[c] is R_BRACE:
                                 if shell_var_open:
                                     if len(shell_variable) > 0:
@@ -103,7 +106,7 @@ class Parser:
                                             "no shell command given at `?{` in value", line, line_num, c+1)
                                 else:
                                     raise builddoc_syntax_error(
-                                        "closing '}' with no '{'", line, line_num, c+1)
+                                        "closing `}` with no `{`", line, line_num, c+1)
                             else:
                                 shell_variable += line[c]
                 except IndexError:  # Absolutely love Python sometimes...
@@ -134,9 +137,59 @@ class Parser:
         # Shell commands.
         # This isn't so much a fallback as it is a syntax error catcher.
         if len(shell_variable) > 0:
-            raise builddoc_base_error(f"Shell command never closed: '{line}'.")
+            raise builddoc_base_error(f"Shell command never closed: `{line}`.")
+
+        # Checking if the line is a command and getting rid of the comment on the end (if any).
+        if line_is_cmd:
+            for c in range(len(line)):
+                if line[c] is COMMENT:
+                    if line[c-1] is WHITESPACE or line[c-1] is TAB:
+                        line = line[0:c-1]
+                        break
+                    line = line[0:c]
+                    break
 
         return line
+
+    @staticmethod
+    def parse_macro(macro: str, line: int) -> "tuple[str, str]":
+        """
+        Parses `macro`, returning the macro name and value / argument(s).
+        """
+
+        # List of valid macros.
+        MACROS = ["set", "raise", "warn", "pass"]
+        macro_name, macro_contents = "", ""
+        macro_open = False
+
+        for c in range(len(macro)):
+            if macro[c] is MACRO_OP:
+                continue
+
+            elif macro[c] is L_PARENTH:
+                if macro_name not in MACROS:
+                    raise builddoc_error(
+                        f"Unknown macro: `{macro_name}`.", line, c+1)
+                macro_open = True
+
+            elif macro[c] is R_PARENTH:
+                if macro_open:
+                    break
+                else:
+                    raise builddoc_syntax_error(
+                        f"Unopened `)`.", macro, line, c+1)
+
+            else:
+                if macro_open:
+                    if macro[c] in ALL_OPERATORS:
+                        raise builddoc_syntax_error(
+                            f"operator `{macro[c]}` in macro argument", macro, line, c+1)
+                    macro_contents += macro[c]
+
+                else:
+                    macro_name += macro[c]
+
+        return (macro_name, macro_contents)
 
     @staticmethod
     def parse_values(vars_dict: "dict[str, tuple[str, int]]") -> "dict[str, tuple[str, int]]":
@@ -146,98 +199,46 @@ class Parser:
 
         parsed_vars_dict: dict[str, str] = {}
 
-        # Parsing variables.
         for var in vars_dict:
             value = vars_dict[var][0]
             line = vars_dict[var][1]
-            parsed_value = Parser.parse_line(value, line, vars_dict)
+            parsed_value = Parser.parse_line(value, line, vars_dict, False)
 
-            if parsed_value is not value and len(parsed_value) > 0:
+            if len(parsed_value) > 0:
                 parsed_vars_dict[var] = parsed_value
 
         return parsed_vars_dict
 
-    # @staticmethod
-    # def parse_tasks(tasks_dict: "dict[str, list[tuple[str, int]]]") -> "dict[str, list[tuple[str, int]]]":
-    #     """
-    #     Parses all commands in each task.
-    #     """
+    @staticmethod
+    def parse_task(task: "str | None", tasks: "dict[str, list[tuple[str, int]]]", parsed_variables: "dict[str, tuple[str, int]]") -> "tuple[str | None, dict[str, list[str | tuple[str]]]]":
+        """
+        Parses all commands in `task`.
+        """
 
-    #     # STRINGS #
-    #     command = ""
-    #     macro_name = ""
-    #     macro_contents = ""
-    #     condition = ""
+        parsed_task: "dict[str, list[str | tuple[str]]]" = {}
 
-    #     # BOOLEANS #
-    #     reading_macro = False
-    #     done_with_macro_name = False
-    #     silenced = False
+        # Early check.
+        if task is not None:
+            if task not in tasks:
+                raise builddoc_base_error(f"Unknown task: `{task}`.")
 
-    #     # OTHER #
-    #     parsed_tasks_dict: dict[str, list[str]] = {}
+        else:
+            for t in tasks:
+                if len(t) > 0:
+                    task = t  # `task` is now the default task in the BuildDoc.
+                    break
 
-    #     # Parsing tasks.
-    #     for task in tasks_dict:
-    #         if len(task) < 1:
-    #             continue
-    #         else:
-    #             tuples: list[tuple[str, int]] = [c for c in tasks_dict[task]]
+        parsed_task[task] = []
 
-    #             for tup in tuples:
-    #                 cmd = tup[0]
-    #                 line = tup[1]
+        for cmdln in tasks[task]:
+            cmd = cmdln[0]
+            line = cmdln[1]
 
-    #                 if len(cmd) < 1:
-    #                     continue
+            if len(cmd) > 0:
+                if cmd[0] is MACRO_OP:
+                    parsed_task[task].append(Parser.parse_macro(cmd, line))
+                else:
+                    parsed_task[task].append(Parser.parse_line(
+                        cmd, line, parsed_variables, True))
 
-    #     return parsed_tasks_dict
-
-    # @staticmethod
-    # def verify_syntax_of_macro(macro: str, line: int) -> None:
-    #     """
-    #     Ensures that nothing follows the closing parenthesis in a macro call, as well as checking that the call is
-    #     syntatically correct.
-    #     """
-
-    #     c = 0
-    #     paren_open = False
-    #     paren_good = False
-
-    #     while c < len(macro):
-    #         if macro[c] is L_PARENTH:
-    #             paren_open = True
-    #         elif macro[c] is R_PARENTH:
-    #             if paren_open:
-    #                 paren_good, paren_open = True, False
-    #             else:
-    #                 raise builddoc_syntax_error(
-    #                     "invalid macro syntax", macro, line, c+1)
-
-    #         else:
-    #             if paren_open:
-    #                 pass
-    #             elif paren_good:
-    #                 if macro[c] is WHITESPACE or macro[c] is TAB:
-    #                     pass
-    #                 elif macro[c] is COMMENT:
-    #                     break
-    #                 else:
-    #                     raise builddoc_unexpected_char_error(
-    #                         macro[c], line, c+1)
-    #             else:
-    #                 pass
-
-    #         c += 1  # 🏁
-
-    # @staticmethod
-    # def read_macro(macro: str, value: str, line: int) -> None:
-    #     """
-    #     Reads and executes the given macro.
-    #     """
-
-    #     if macro == "goto":
-    #         print(f"go over to '{value}'.")
-    #     else:
-    #         raise builddoc_error(
-    #             f"Invalid macro: '{macro}'.", line, len(macro))
+        return (task, parsed_task)

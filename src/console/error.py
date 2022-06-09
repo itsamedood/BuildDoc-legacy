@@ -46,9 +46,16 @@ class builddoc_unexpected_char_error(builddoc_base_error):
 
 
 class builddoc_syntax_error(builddoc_base_error):
-    def __init__(self, syntax_message: str, bad_syntax: str, line: int, character: int, code: int = 4) -> None:
+    def __init__(self, syntax_message: str, bad_syntax: str, line: int, character: int, code: int = 3) -> None:
         print(
             f"builddoc: {Color.ERROR}error{BOLD_WHITE}: {BOLD_GRAY}[{line},{character}]{BOLD_WHITE}: Bad syntax ({syntax_message}): `{bad_syntax}`.{Color.RESET}")
+        exit(code)
+
+
+class builddoc_command_error(builddoc_base_error):
+    def __init__(self, task: str, command: str, code: int = 4) -> None:
+        print(
+            f"builddoc: {Color.ERROR}error{BOLD_WHITE}: {BOLD_GRAY}[{task}]{BOLD_WHITE}: Command failed: `{command}`.{Color.RESET}")
         exit(code)
 
 

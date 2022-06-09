@@ -1,5 +1,5 @@
 # EXAMPLE BUILDDOC #
-# Comments are thrown around for testing that the lexer will properly ignore them.
+# Comments are thrown around for testing that the lexer & parser will properly ignore them.
 
 [.VARS] # Variables.
 ONLINE_NAME='itsamedood' # Me!
@@ -8,17 +8,13 @@ OS=?{uname -s | tr A-Z a-z}
 EVERYTHING="I ($ONLINE_NAME AKA @USER) am using ?{uname -s | tr A-Z a-z}."
 
 [test] # Default task. Can be run by executing `build test` or just `build`.
-%goto(other-test) # Faster than adding `build other-test` because the script would have to be read and parsed again.
-echo $NAME
-echo '$GREETING'
-&echo "$OS"
+%goto(other-test)
+&echo "$ONLINE_NAME!" # Test comment.
+echo '@USER'
+echo ?{uname -s | tr A-Z a-z}
 
 [other-test] # Can only be run by executing 'build other-test', or by using the `goto` macro.
 echo ":D"
-#if ($OS == "darwin" && $ONLINE_NAME == "itsamedood")
-#	&echo("MacBook for dood!")
-#elif ($OS == "linux" || @USER == "jr")
-#	&echo("Linux for me!")
-#else
-#	&echo("Windows...")
-#endif
+
+[macro-test] # Tests macros.
+%pass()
