@@ -96,7 +96,7 @@ class Lexer:
                                     raise builddoc_syntax_error(
                                         "missing section name", "[]", line+1, c+1)
 
-                    elif lines[line][0] is WHITESPACE or lines[line][0] is TAB and section == ".VARS":
+                    elif lines[line][0] is WHITESPACE or lines[line][0] is TAB and section.upper() == ".VARS":
                         raise builddoc_syntax_error(
                             "line starts with whitespace or tab", lines[line], line+1, c+1)
 
@@ -108,16 +108,24 @@ class Lexer:
                         while c < len(chars):
                             # Reading variables.
                             # The parser will handle any syntax errors here.
-                            if section == ".VARS":
+                            if section.upper() == ".VARS":
                                 if reading_var_name:
+                                    # `or chars[c] in NUMBER `.
                                     if chars[c] in LOWER_LETTER or chars[c] in UPPER_LETTER or chars[c] is UNDERSCORE or chars[c] is ASSIN_OP:
                                         if chars[c] is ASSIN_OP:
+                                            # if var_name[0] in NUMBER:
+                                            #     raise builddoc_syntax_error(
+                                            #         "variable name starts with number", var_name, line+1, c+1)
+
                                             reading_var_name = False
+
                                         else:
                                             var_name += chars[c]
+
                                     else:
                                         raise builddoc_unexpected_char_error(
                                             chars[c], line+1, c+1)
+
                                 else:
                                     if chars[c] is SINGLE_QUOTE:
                                         single_quote = not single_quote
@@ -152,13 +160,15 @@ class Lexer:
 
                             c += 1  # 🏁
 
-                        if section == ".VARS":
+                        if section.upper() == ".VARS":
                             if single_quote:
                                 raise builddoc_syntax_error(
                                     "unclosed string", "'...", line+1, c+1)
+
                             elif double_quote:
                                 raise builddoc_syntax_error(
                                     "unclosed string", '"...', line+1, c+1)
+
                             else:
                                 # Set variable in dictionary, then reset variables used.
                                 var_dict.__setitem__(
@@ -166,6 +176,7 @@ class Lexer:
                                 var_name, var_value = "", ""
                                 single_quote, double_quote = False, False
                                 reading_var_name = True
+
                         else:
                             if section not in task_dict:
                                 task_dict[section] = [(command, line+1)]

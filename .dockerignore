@@ -1,2 +1,5 @@
 /.mypy_cache
 /bin
+/release
+*.DS_Store
+README.txt

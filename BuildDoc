@@ -2,19 +2,13 @@
 # Comments are thrown around for testing that the lexer & parser will properly ignore them.
 
 [.VARS] # Variables.
-ONLINE_NAME='itsamedood' # Me!
-GREETING="Hi @USER, or should I say... $ONLINE_NAME!"
+NAME="dood"
+ENV_NAME='@USER'
 OS=?{uname -s | tr A-Z a-z}
-EVERYTHING="I ($ONLINE_NAME AKA @USER) am using ?{uname -s | tr A-Z a-z}."
 
-[test] # Default task. Can be run by executing `build test` or just `build`.
-%goto(other-test)
-&echo "$ONLINE_NAME!" # Test comment.
-echo '@USER'
-echo ?{uname -s | tr A-Z a-z}
+[default]
+&echo "$NAME"
 
-[other-test] # Can only be run by executing 'build other-test', or by using the `goto` macro.
-echo ":D"
-
-[macro-test] # Tests macros.
-%pass()
+[test]
+echo "1"; echo "2"
+&echo "3"; echo "4" # Both echoes here are silenced, unlike the first 2.

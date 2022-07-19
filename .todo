@@ -1,6 +1,0 @@
-• Get escape sequences working.
-• Finish the config feature.
-• Write a proper installer (`.sh` for MacOS & Linux, `.bat` for Windows).
-• Write actual documentation (maybe use ReadTheDocs?).
-• Add if-else statements.
-• Add for-loops (maybe).

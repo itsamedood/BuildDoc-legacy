@@ -3,12 +3,16 @@
 # Files.
 MAIN 	:= src/main.py
 BINARY	:= builddoc-bin
+ZIP					:=
 
 # OS-Dependant.
-OS			 := $(shell uname -s | tr A-Z a-z)
-SYS 		 :=
-OUTPUT_PATH  :=
-RELEASE_PATH :=
+OS			 		:= $(shell uname -s | tr A-Z a-z)
+SYS 		 		:=
+OUTPUT_PATH  		:=
+
+# Other.
+BUILDDOC_VERSION	:= 0.0.1
+RELEASE_STAGE 		:= ALPHA
 
 # Checking the OS.
 ifeq ($(OS), linux)
@@ -21,7 +25,9 @@ endif
 
 # Updating paths.
 OUTPUT_PATH  := bin/$(SYS)
-RELEASE_PATH := release/$(SYS)
+ZIP			 := release/$(BUILDDOC_VERSION)/$(RELEASE_STAGE)/builddoc-$(SYS).zip
+
+.PHONY: release
 
 # Compiles all the python files to an executable, using cxfreeze.
 # https://pypi.org/project/cx-Freeze/
@@ -49,8 +55,28 @@ run:
 	@echo ---------------
 	./$(OUTPUT_PATH)/$(BINARY)
 
-# Zips together the binary & it's libraries (according to your OS) and puts it in `./release`.
+test:
+	@echo 🧪 Testing... 🧪
+	@echo ---------------
+	./$(OUTPUT_PATH)/$(BINARY) -v
+
+# Zips together the binary, it's libraries, the shell scripts, and the README, then puts it in `./release`.
 release:
 	@echo 📁 Releasing... 📁
 	@echo -----------------
-	@echo ❗️Cannot release yet! | lolcat -f
+ifeq ("$(wildcard ./release/)", "")
+	mkdir release
+endif
+
+ifeq ("$(wildcard ./release/$(BUILDDOC_VERSION)/)", "")
+	mkdir release/$(BUILDDOC_VERSION)
+endif
+
+ifeq ("$(wildcard ./release/$(BUILDDOC_VERSION)/$(RELEASE_STAGE)/)", "")
+	mkdir ./release/$(BUILDDOC_VERSION)/$(RELEASE_STAGE)/
+endif
+# 						./scripts/*  👇
+	zip -X -r ./$(ZIP) ./bin/$(SYS)/* ./README.txt | lolcat -f
+
+	@echo 📂 Released v$(BUILDDOC_VERSION) [$(RELEASE_STAGE)]! 📂
+	@echo -----------------------------------

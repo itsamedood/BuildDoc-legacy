@@ -1,3 +1,5 @@
+"""All tokens BuildDoc considers valid."""
+
 # === LETTERS & NUMBER === #
 LOWER_LETTER: "list[str]" = [c for c in "abcdefghijklmnopqrstuvwxyz"]
 UPPER_LETTER: "list[str]" = [c for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"]

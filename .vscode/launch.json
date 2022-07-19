@@ -22,6 +22,17 @@
             ]
         },
         {
+            "name": "Test",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "clear",
+            "args": [
+                "&&",
+                "make",
+                "test"
+            ]
+        },
+        {
             "name": "Release",
             "type": "PowerShell",
             "request": "launch",

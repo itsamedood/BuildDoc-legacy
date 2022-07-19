@@ -1,4 +1,8 @@
 /.mypy_cache
 /bin
-.DS_Store
-*.log
+/private
+/release
+
+# 👇 This is the README packaged with every release.
+README.txt
+*.DS_Store

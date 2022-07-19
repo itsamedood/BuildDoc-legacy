@@ -9,7 +9,7 @@ class Parser:
     """
 
     @staticmethod
-    def parse_line(line: str, line_num: int, parsed_vars: "dict[str, tuple[str, int]]", line_is_cmd=False) -> str:
+    def parse_line(line: str, line_num: "int | None", parsed_vars: "dict[str, tuple[str, int]]", line_is_cmd=False) -> str:
         """
         Parses any and all variables on `line`.
         """
@@ -37,7 +37,8 @@ class Parser:
 
                     else:
                         if reading_var:
-                            if line[c] in LOWER_LETTER or line[c] in UPPER_LETTER or line[c] is PERIOD or line[c] is UNDERSCORE:
+                            # `or chars[c] in NUMBER `.
+                            if line[c] in LOWER_LETTER or line[c] in UPPER_LETTER or line[c] is UNDERSCORE:
                                 variable += line[c]
                             else:
                                 if not len(variable) > 0:
@@ -52,8 +53,12 @@ class Parser:
                                         line = line.replace(
                                             f"${variable}", parsed_vars[variable][0])
                                 except KeyError:
-                                    raise builddoc_error(
-                                        f"Unknown variable: `{variable}`.", line_num, c+1)
+                                    if line_num is not None:
+                                        raise builddoc_error(
+                                            f"Unknown variable: `{variable}`.", line_num, c+1)
+                                    else:
+                                        raise builddoc_base_error(
+                                            f"Unknown global variable: `{variable}`.")
 
                                 variable = ""
                                 reading_var = False
@@ -119,17 +124,27 @@ class Parser:
         # Regular variables.
         if len(variable) > 0:
             try:
-                line = line.replace(
-                    f"${variable}", parsed_vars[variable][0])
+                if line_is_cmd:
+                    line = line.replace(
+                        f"${variable}", parsed_vars[variable])
+                else:
+                    line = line.replace(
+                        f"${variable}", parsed_vars[variable][0])
+
             except KeyError:
-                raise builddoc_error(
-                    f"Unknown variable: `{variable}`.", line_num, len(variable))
+                if line_num is not None:
+                    raise builddoc_error(
+                        f"Unknown variable: `{variable}`.", line_num, len(variable))
+                else:
+                    raise builddoc_base_error(
+                        f"Unknown global variable: `{variable}`.")
 
         # Env variables.
         if len(env_variable) > 0:
             try:
                 line = line.replace(
                     f"@{env_variable}", getenv(env_variable))
+
             except KeyError:
                 raise builddoc_error(
                     f"Unknown env variable: `{env_variable}`.", line_num, len(env_variable))
@@ -152,13 +167,11 @@ class Parser:
         return line
 
     @staticmethod
-    def parse_macro(macro: str, line: int) -> "tuple[str, str]":
+    def parse_macro(macro: str, line: int) -> "tuple[str, str, int]":
         """
         Parses `macro`, returning the macro name and value / argument(s).
         """
 
-        # List of valid macros.
-        MACROS = ["set", "raise", "warn", "pass"]
         macro_name, macro_contents = "", ""
         macro_open = False
 
@@ -167,9 +180,6 @@ class Parser:
                 continue
 
             elif macro[c] is L_PARENTH:
-                if macro_name not in MACROS:
-                    raise builddoc_error(
-                        f"Unknown macro: `{macro_name}`.", line, c+1)
                 macro_open = True
 
             elif macro[c] is R_PARENTH:
@@ -189,16 +199,70 @@ class Parser:
                 else:
                     macro_name += macro[c]
 
-        return (macro_name, macro_contents)
+        if not macro_open:
+            actual_macro_name = ""
+
+            for c in macro:
+                if c is WHITESPACE or c is TAB or c is COMMENT:
+                    break
+                else:
+                    actual_macro_name += c
+
+            raise builddoc_syntax_error(
+                f"macro never opened", actual_macro_name, line, len(actual_macro_name))
+
+        return (macro_name, macro_contents, line)
 
     @staticmethod
-    def parse_values(vars_dict: "dict[str, tuple[str, int]]") -> "dict[str, tuple[str, int]]":
+    def condition_is_true(logic_keyword: str, condition: str, line: int) -> bool:
         """
-        Parses all variable values.
+        Reads `condition`, returning `True` or `False`.
+        """
+
+        left_operand, right_operand = "", ""
+        comma = False
+        c = 0
+
+        while c < len(condition):
+            if comma:
+                if condition[c] is COMMA:
+                    raise builddoc_unexpected_char_error(
+                        condition[c], line, c+1)
+
+                right_operand += condition[c]
+
+            else:
+                if condition[c] is COMMA:
+                    comma = True
+                else:
+                    left_operand += condition[c]
+
+            c += 1  # 🏁
+
+        if logic_keyword == "ifeq" or logic_keyword == "elifeq":
+            return left_operand == right_operand
+
+        elif logic_keyword == "ifneq" or logic_keyword == "elifneq":
+            return not left_operand == right_operand
+
+    @staticmethod
+    def parse_values(vars_dict: "dict[str, tuple[str, int]]", global_vars: "dict[str, str]") -> "dict[str, tuple[str, int]]":
+        """
+        Parses all variable values (including global, which is parsed first).
         """
 
         parsed_vars_dict: dict[str, str] = {}
 
+        # Global variables.
+        for gvar in global_vars:
+            gvalue = global_vars[gvar]
+            parsed_gvalue = Parser.parse_line(
+                gvalue, None, parsed_vars_dict, True)
+
+            if len(parsed_gvalue) > 0:
+                parsed_vars_dict[gvar] = parsed_gvalue
+
+        # Local variables.
         for var in vars_dict:
             value = vars_dict[var][0]
             line = vars_dict[var][1]
@@ -215,9 +279,7 @@ class Parser:
         Parses all commands in `task`.
         """
 
-        parsed_task: "dict[str, list[str | tuple[str]]]" = {}
-
-        # Early check.
+        # Checking if a task was specified and if it exists. If it `None`, the 1st task is used.
         if task is not None:
             if task not in tasks:
                 raise builddoc_base_error(f"Unknown task: `{task}`.")
@@ -228,17 +290,89 @@ class Parser:
                     task = t  # `task` is now the default task in the BuildDoc.
                     break
 
+        parsed_task: "dict[str, list[str | tuple[str, str, int]]]" = {}
+        #                      0       1        2          3        4       5
+        # LOGIC_KEYWORDS = ["ifeq", "ifneq", "elifeq", "elifneq", "else", "fi"]
+        # cmd_check, condition = "", ""
+        # in_if, brace_open, condition_result, any_cond_true = False, False, False, False
+
         parsed_task[task] = []
 
         for cmdln in tasks[task]:
             cmd = cmdln[0]
             line = cmdln[1]
+            # c = 0
 
-            if len(cmd) > 0:
+            # Checking for a conditional keyword & condition (if any).
+            # while c < len(cmd):
+            #     if cmd[c] is WHITESPACE or cmd[c] is TAB:
+            #         pass
+
+            #     elif cmd[c] is LINEFEED:
+            #         break
+
+            #     elif cmd[c] is L_BRACE:
+            #         if cmd_check not in LOGIC_KEYWORDS:
+            #             pass
+
+            #         elif (cmd_check is LOGIC_KEYWORDS[0] or cmd_check is LOGIC_KEYWORDS[1]) or ((cmd_check is LOGIC_KEYWORDS[4] or cmd_check is LOGIC_KEYWORDS[5])) and in_if:
+            #             raise builddoc_unexpected_char_error(
+            #                 cmd_check, line, c+1)
+
+            #         elif cmd_check is LOGIC_KEYWORDS[0] or cmd_check is LOGIC_KEYWORDS[1]:
+            #             in_if = True
+            #         brace_open = True
+
+            #     elif cmd[c] is R_BRACE:
+            #         if len(condition) < 1:
+            #             raise builddoc_syntax_error(
+            #                 "no condition given", f"{cmd_check} {{}}", line, c+1)
+
+            #         elif not brace_open:
+            #             raise builddoc_syntax_error(
+            #                 "unopened `}`", cmd, line, c+1)
+
+            #         brace_open = False
+            #         break
+
+            #     else:
+            #         if brace_open:
+            #             condition += cmd[c]
+            #         else:
+            #             cmd_check += cmd[c]
+
+            #     c += 1  # 🏁
+
+            # Checking if the first word is a logical keyword that has a condition.
+            # if cmd_check in LOGIC_KEYWORDS[:3] and len(condition) > 0:
+            #     condition_result: bool | None = Parser.condition_is_true(cmd_check, Parser.parse_line(
+            #         condition, line, parsed_variables, True), line)
+
+            #     print(f"{condition} is {condition_result}")
+
+            # Checking if the first word is a logical keyword that has no condition, which is `else` or `fi`.
+            # elif cmd_check in LOGIC_KEYWORDS[4:5] and len(condition) < 1 and not any_cond_true:
+            #     if cmd_check is LOGIC_KEYWORDS[4] and not any_cond_true:
+            #         pass
+
+            #     elif cmd_check is LOGIC_KEYWORDS[5]:
+            #         pass
+
+            # elif any_cond_true:
+            #     pass
+
+            # else:
+            #     cmd_check = ""
+
+            # Running the command or macro.
+            if len(cmd) > 0:  # `and len(cmd_check) < 1:` should go before `:`.
                 if cmd[0] is MACRO_OP:
-                    parsed_task[task].append(Parser.parse_macro(cmd, line))
+                    parsed_task[task].append(
+                        Parser.parse_macro(cmd, line))
+
                 else:
                     parsed_task[task].append(Parser.parse_line(
                         cmd, line, parsed_variables, True))
 
-        return (task, parsed_task)
+        # `in_if` is returned to check if the last if statement was closed.
+        return (task, parsed_task, True)  # Replace `True` with `in_if` later.
