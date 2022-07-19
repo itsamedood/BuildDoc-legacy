@@ -18,10 +18,32 @@
 # Installation
 > ## Basic Installation
 > ### Steps
-> <!-- > - Go to [releases](https://github.com/itsamedood/BuildDoc/releases/). -->
-> \* *Steps will become available when a release is made!*
-> ## Installing from source (advanced)
+> Go to [releases](https://github.com/itsamedood/BuildDoc/releases/), download the version for your OS.
+> To use in shells (linux/mac), add the following to `.bashrc` or `.zshrc`, etc, depending on which shell you're using:
+>
+> `alias build="/path/to/builddoc-bin"`
+>
+> Then run `build` whenever you want to run BuildDoc.
+>
+> For example, if you install BuildDoc to your desktop folder, you would do:
+> 
+> ### MACOS
+> `alias build="$HOME/Desktop/BuildDoc/bin/macos/builddoc-bin"`
+> ---
+> ### LINUX
+> `alias build="~/Desktop/BuildDoc/bin/macos/builddoc-bin"`
+> ---
+> ### WINDOWS
+> I haven't gotten it working on Windows yet, sorry!
+> ---
+
+> ## Installing from source (advanced) (I haven't tested this 🙂)
 > ### Steps
-> <!-- git gud -->
-> \* *Steps will become available when a release is made!*
+> Install python somehow.
+> 
+> Clone this project's source code by either downloading the zip, or with `git clone https://github.com/itsamedood/BuildDoc`.
+> 
+> Set an alias in your shell config file, like mentioned earlier, but `alias build="python /path/to/builddoc/src/main.py"`.
+> ---
+You do not *need* to use an alias for the shell commands, you can just run whatever is in the quotes("") instead, it's just slower for you.
 ---
